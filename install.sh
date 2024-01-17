@@ -7,24 +7,32 @@ crontab="no"
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -c|--continue)
-            ="yes"
+            continue="yes"
             shift
             ;;
     case "$1" in
         -r|--reboot)
-            ="yes"
+            reboot="yes"
             shift
             ;;
     case "$1" in
         -r|--crontab)
-            ="yes"
+            crontab="yes"
             shift
+            ;;
+        *)
+            echo "Unknown option: $1"
+            exit 1
             ;;
     esac
 done
 
-main.run() {
+
 #Update
+Update.run() {
+Sudo apt-get update -y
+Sudo apt-get upgrade -y
+sudo apt install curl git net-tools screen nmap jq build-essential cmake libuv1-dev libssl-dev libhwloc-dev resolvconf -y
 
 }
 
@@ -67,33 +75,60 @@ fi
 }
 
 
+#Restart
+sys.restart() {
+printf "\nServer rebooting. Login with same user after reboot to continue install\n"
+sleep 2
+printf "\nServer Rebooting. Press Ctrl C to abort\n"
+sleep 5
+echo Rebooting
+sleep 5
+sudo reboot
+}
+
+
+
 continue.run() {
-
-
+git clone https://github.com/xmrig/xmrig.git
+if [ "$current_user" = "root" ]; then
+    bashrc_backup="/root/.bashrc.original"
+ else
+    mkdir /home/$current_user/.bashrc.original"
 
 }
 
 
 
 
-Update
-
-Install
-
-DNS
-
-Save Bashrc
-
-reboot?
-
-clone
-
-make
-
-build
-
-run
-
-crontab
 
 
+
+### Clearing bashrc ###
+bashrc.clear(){
+printf "\nClearing bashrc\n"
+sleep 3
+# Get the username
+current_user=$(whoami)
+
+# Determine the home directory based on the user
+if [ "$current_user" = "root" ]; then
+    home_directory="/root"
+else
+    home_directory="/home/$current_user"
+fi
+
+# Define the paths
+bashrc_file="$home_directory/.bashrc"
+bashrc_backup="$home_directory/.bashrc.original"
+
+# Check if .bashrc.original backup exists
+if [ -f "$bashrc_backup" ]; then
+    # Backup exists, delete current .bashrc and rename .bashrc.original
+    rm "$bashrc_file"
+    mv "$bashrc_backup" "$bashrc_file"
+    printf "\nRestored .bashrc from backup.\n"
+else
+    # Backup does not exist
+    printf "\nNo .bashrc.original backup found. No changes made.\n"
+fi
+}
