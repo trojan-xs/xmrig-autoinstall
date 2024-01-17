@@ -1,10 +1,22 @@
 #Update and upgrade
 
 continue="no"
+reboot="no"
+crontab="no"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         -c|--continue)
+            ="yes"
+            shift
+            ;;
+    case "$1" in
+        -r|--reboot)
+            ="yes"
+            shift
+            ;;
+    case "$1" in
+        -r|--crontab)
             ="yes"
             shift
             ;;
