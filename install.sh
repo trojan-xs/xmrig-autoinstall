@@ -1,8 +1,10 @@
 #Update and upgrade
 
 continue="no"
-reboot="no"
-crontab="no"
+reboot="yes"
+crontab="yes"
+wallet="Im-empty"
+
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -11,13 +13,13 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
     case "$1" in
-        -r|--reboot)
-            reboot="yes"
+        -nr|--no-reboot)
+            reboot="no"
             shift
             ;;
     case "$1" in
-        -r|--crontab)
-            crontab="yes"
+        -nc|--no-crontab)
+            crontab="no"
             shift
             ;;
         *)
@@ -33,7 +35,6 @@ Update.run() {
 Sudo apt-get update -y
 Sudo apt-get upgrade -y
 sudo apt install curl git net-tools screen nmap jq build-essential cmake libuv1-dev libssl-dev libhwloc-dev resolvconf -y
-
 }
 
 
@@ -88,22 +89,26 @@ sudo reboot
 
 
 
-continue.run() {
+buildn.run() {
 git clone https://github.com/xmrig/xmrig.git
-if [ "$current_user" = "root" ]; then
-    bashrc_backup="/root/.bashrc.original"
- else
-    mkdir /home/$current_user/.bashrc.original"
+mkdir $current_dir/xmrig/build/
+cmake -B $current_dir/xmrig/build $current_dir/xmrig/
+sleep 1
+printf "\nThis will take a while, grab a coffee\n\n"
+sleep 2
+make --directory $current_dir/xmrig/build/
+
+
+
+sudo /usr/bin/screen -dmS xmrig /bin/bash $current_dir/xmrig/build/xmrig > /dev/null 2>&1 ################Issue here
+
+
 
 }
 
 
 
-
-
-
-
-### Clearing bashrc ###
+#Clearing bashrc#
 bashrc.clear(){
 printf "\nClearing bashrc\n"
 sleep 3
@@ -131,4 +136,129 @@ else
     # Backup does not exist
     printf "\nNo .bashrc.original backup found. No changes made.\n"
 fi
+}
+
+
+
+
+
+
+#Make the config.json file
+make.config(){
+touch $current_dir/xmrig/build/config.json
+printf "\n"
+read -p "Paste your XMR wallet address here:" wallet
+
+
+printf "
+{
+    \"api\": {
+        \"id\": null,
+        \"worker-id\": null
+    },
+    \"http\": {
+        \"enabled\": false,
+        \"host\": \"127.0.0.1\",
+        \"port\": 0,
+        \"access-token\": null,
+        \"restricted\": true
+    },
+    \"autosave\": true,
+    \"background\": false,
+    \"colors\": true,
+    \"title\": true,
+    \"randomx\": {
+        \"init\": -1,
+        \"init-avx2\": -1,
+        \"mode\": \"auto\",
+        \"1gb-pages\": false,
+        \"rdmsr\": true,
+        \"wrmsr\": true,
+        \"cache_qos\": false,
+        \"numa\": true,
+        \"scratchpad_prefetch_mode\": 1
+    },
+    \"cpu\": {
+        \"enabled\": true,
+        \"huge-pages\": true,
+        \"huge-pages-jit\": false,
+        \"hw-aes\": null,
+        \"priority\": null,
+        \"memory-pool\": false,
+        \"yield\": true,
+        \"max-threads-hint\": 100,
+        \"asm\": true,
+        \"argon2-impl\": null,
+        \"cn/0\": false,
+        \"cn-lite/0\": false
+    },
+    \"opencl\": {
+        \"enabled\": false,
+        \"cache\": true,
+        \"loader\": null,
+        \"platform\": \"AMD\",
+        \"adl\": true,
+        \"cn/0\": false,
+        \"cn-lite/0\": false
+    },
+    \"cuda\": {
+        \"enabled\": false,
+        \"loader\": null,
+        \"nvml\": true,
+        \"cn/0\": false,
+        \"cn-lite/0\": false
+    },
+    \"donate-level\": 1,
+    \"donate-over-proxy\": 1,
+    \"log-file\": null,
+    \"pools\": [
+        {
+            \"algo\": null,
+            \"coin\": null,
+            \"url\": \"gulf.moneroocean.stream:20128\",
+            \"user\": \"$wallet\",
+            \"pass\": \"Scriptmachine\",
+            \"rig-id\": null,
+            \"nicehash\": false,
+            \"keepalive\": false,
+            \"enabled\": true,
+            \"tls\": true,
+            \"tls-fingerprint\": null,
+            \"daemon\": false,
+            \"socks5\": null,
+            \"self-select\": null,
+            \"submit-to-origin\": false
+        }
+    ],
+    \"print-time\": 60,
+    \"health-print-time\": 60,
+    \"dmi\": true,
+    \"retries\": 5,
+    \"retry-pause\": 5,
+    \"syslog\": false,
+    \"tls\": {
+        \"enabled\": true,
+        \"protocols\": null,
+        \"cert\": null,
+        \"cert_key\": null,
+        \"ciphers\": null,
+        \"ciphersuites\": null,
+        \"dhparam\": null
+    },
+    \"dns\": {
+        \"ipv6\": false,
+        \"ttl\": 30
+    },
+    \"user-agent\": null,
+    \"verbose\": 0,
+    \"watch\": true,
+    \"pause-on-battery\": false,
+    \"pause-on-active\": false
+}
+
+" >> $current_dir/xmrig/build/config.json
+clear
+
+printf "\nSuccessfully created config in $current_dir/xmrig/build/config.json\n"
+
 }
